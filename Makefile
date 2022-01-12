@@ -11,14 +11,17 @@ BUILD_DIR = ./build
 
 all : philphix
 
-philphix : philphix.o hashtable.o
-	$(CC) $(LDFLAGS) -o philphix $(BUILD_DIR)/philphix.o $(BUILD_DIR)/hashtable.o
+philphix : philphix.o hashtable.o unittest.o
+	$(CC) $(LDFLAGS) -o philphix $(BUILD_DIR)/philphix.o $(BUILD_DIR)/hashtable.o $(BUILD_DIR)/unittest.o 
 
 philphix.o : src/philphix.c src/philphix.h src/hashtable.h build_dir
 	$(CC) $(CFLAGS) src/philphix.c -o $(BUILD_DIR)/philphix.o
 
 hashtable.o : src/hashtable.c src/hashtable.h build_dir
 	$(CC) $(CFLAGS) src/hashtable.c -o $(BUILD_DIR)/hashtable.o
+
+unittest.o : src/unittest.c src/unittest.h build_dir
+	$(CC) $(CFLAGS) src/unittest.c -o $(BUILD_DIR)/unittest.o
 
 build_dir :
 	mkdir -p $(BUILD_DIR)
@@ -28,6 +31,8 @@ clean :
 
 # Make sure you leave testpassedall as the last thing in this line. You can add your own custom tests before it.
 test: testbasic testedge testpassedall
+
+# unittest: clean philphix
 
 testbasic: clean philphix
 	touch tests/sanity/testOutput

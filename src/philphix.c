@@ -28,6 +28,8 @@
  */
 #include <string.h>
 
+#include "unittest.h"
+
 /*
  * This hash table stores the dictionary.
  */
@@ -39,6 +41,9 @@ HashTable *dictionary;
  * the grading process.
  */
 int main(int argc, char **argv) {
+  fprintf(stderr, "Loading unit tests\n");
+  unittest();
+
   if (argc != 2) {
     fprintf(stderr, "Specify a dictionary\n");
     return 1;
@@ -69,10 +74,13 @@ int main(int argc, char **argv) {
  */
 unsigned int stringHash(void *s) {
   // -- TODO --
-  fprintf(stderr, "need to implement stringHash\n");
-
-  /* To suppress compiler warning until you implement this function, */
-  return 0;
+  int sum = 0;
+  char *str = (char *) s;
+  while (*str != '\0') {
+    sum = sum * 31 + *str;
+    str++;
+  }
+  return abs(sum); // base 31 number
 }
 
 /*
@@ -81,9 +89,7 @@ unsigned int stringHash(void *s) {
  */
 int stringEquals(void *s1, void *s2) {
   // -- TODO --
-  fprintf(stderr, "You need to implement stringEquals");
-  /* To suppress compiler warning until you implement this function */
-  return 0;
+  return !strcmp((char *) s1, (char *) s2);
 }
 
 /*
