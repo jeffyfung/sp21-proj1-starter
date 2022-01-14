@@ -95,7 +95,6 @@ void testInsertDataLongInput() {
     free(table);
 }
 
-// sth about uninitialized value
 void testInsertDataDup() {
     HashTable *table = createHashTable(100, &stringHash, &stringEquals);
     char key1[] = "abc123";
@@ -109,10 +108,15 @@ void testInsertDataDup() {
 }
 
 void testInsertDataLargeArrayofInput() {
-    HashTable *table = createHashTable(50, &stringHash, &stringEquals);
+    FILE *fp = fopen("./tests/unittest/largeInput.txt", "r");
+    if (!fp) {
+        fprintf(stderr, "Error in opening input file\n");
+        exit(61);
+    }
+
+    HashTable *table = createHashTable(100, &stringHash, &stringEquals);
     char input[500000];
-    // port from text file generated with a python script
-    if (fgets(input, sizeof(input), stdin)) {
+    if (fgets(input, sizeof(input), fp)) {
         const char *d = ": ";
         char *key;
         int swt = 0;
@@ -122,9 +126,11 @@ void testInsertDataLargeArrayofInput() {
             swt = 1 - swt;
             token = strtok(NULL, d);
         }
-    } else { 
+    } else {
         fprintf(stderr, "error in getting input");
         return; }
+    fclose(fp);
+
     char *checkKey = "check";
     char *checkData = "check123";
     char *search = findData(table, checkKey); 
@@ -134,8 +140,101 @@ void testInsertDataLargeArrayofInput() {
     free(table);
 }
 
+char dictDir[18] = "./tests/unittest/";
+char *al    = "abcde";
+char *num   = "01234";
+char *alNum = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+char *nonWs = "!@#&()-[{}]:;,?/~$^+=<>\\*'\"";
+char *longKey = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+                "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+                "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+                "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+                "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+                "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+                "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+                "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+                "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+                "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";                    ;
+
+void testReadDictionaryBasic() {
+    dictionary = createHashTable(100, &stringHash, &stringEquals);
+    char fn[100] = "";
+    readDictionary(strcat(strcpy(fn, dictDir), "basicDict.txt"));
+    assert(!strcmp(findData(dictionary, "al"), al));
+    assert(!strcmp(findData(dictionary, "num"), num));
+    assert(!strcmp(findData(dictionary, "alNum"), alNum));
+    assert(!strcmp(findData(dictionary, "nonWs"), nonWs));
+    free(dictionary->data);
+    free(dictionary);
+}
+
+void testReadDictionaryNoNewlineEnding() {
+    dictionary = createHashTable(100, &stringHash, &stringEquals);
+    char fn[100] = "";
+    readDictionary(strcat(strcpy(fn, dictDir), "dictNoNewlineEnding.txt"));
+    assert(!strcmp(findData(dictionary, "al"), al));
+    assert(!strcmp(findData(dictionary, "num"), num));
+    assert(!strcmp(findData(dictionary, "alNum"), alNum));
+    assert(!strcmp(findData(dictionary, "nonWs"), nonWs));
+    free(dictionary->data);
+    free(dictionary);
+}
+
+void testReadDictionaryNonExistentFile() {
+    fprintf(stderr, "testing with file that does not exist should print"
+                    " a one-line error statemet: \n");
+    dictionary = createHashTable(100, &stringHash, &stringEquals);
+    char fn[100] = "";
+    readDictionary(strcat(strcpy(fn, dictDir), "ne"));
+    free(dictionary->data);
+    free(dictionary);
+}
+
+
+void testReadDictionaryDupKeys() {
+    dictionary = createHashTable(100, &stringHash, &stringEquals);
+    char fn[100] = "";
+    readDictionary(strcat(strcpy(fn, dictDir), "dictDupKeys.txt"));
+    assert(!strcmp(findData(dictionary, "alNum"), alNum));
+    free(dictionary->data);
+    free(dictionary);
+}
+
+void testReadDictionaryInconsistentSpace() {
+    dictionary = createHashTable(100, &stringHash, &stringEquals);
+    char fn[100] = "";
+    readDictionary(strcat(strcpy(fn, dictDir), "dictInconsistentSpace.txt"));
+    assert(!strcmp(findData(dictionary, "al"), al));
+    assert(!strcmp(findData(dictionary, "num"), num));
+    assert(!strcmp(findData(dictionary, "alNum"), alNum));
+    assert(!strcmp(findData(dictionary, "nonWs"), nonWs));
+    free(dictionary->data);
+    free(dictionary);
+}
+
+void testReadDictionaryLongKeyValue() {
+    dictionary = createHashTable(100, &stringHash, &stringEquals);
+    char fn[100] = "";
+    readDictionary(strcat(strcpy(fn, dictDir), "dictLongKeyValue.txt"));
+    assert(!strcmp(findData(dictionary, longKey), longKey));
+    assert(!strcmp(findData(dictionary, "al"), al));
+    assert(!strcmp(findData(dictionary, "num"), num));
+    free(dictionary->data);
+    free(dictionary);
+}
+
+void testReadDictionaryMultipleEntries() {
+    dictionary = createHashTable(100, &stringHash, &stringEquals);
+    char fn[100] = "";
+    readDictionary(strcat(strcpy(fn, dictDir), "dictMultipleEntries.txt"));
+    assert(!strcmp(findData(dictionary, "check1"), "check123"));
+    assert(!strcmp(findData(dictionary, "check5"), "check567"));
+    free(dictionary->data);
+    free(dictionary);
+}
 
 int unittest(){
+    fprintf(stderr, "running unit tests\n");
     testStringHashAlphaNumeric();
     testStringHashZeroAndSameLeadingChar();
     testStringHashLargeInput();
@@ -144,7 +243,14 @@ int unittest(){
     testInsertDataBasic();
     testInsertDataLongInput();
     testInsertDataDup();
-    testInsertDataLargeArrayofInput();    
+    testInsertDataLargeArrayofInput();
+    testReadDictionaryBasic();
+    testReadDictionaryNoNewlineEnding();
+    // testReadDictionaryNonExistentFile();
+    testReadDictionaryDupKeys();
+    testReadDictionaryInconsistentSpace();
+    testReadDictionaryLongKeyValue();
+    testReadDictionaryMultipleEntries();
     fprintf(stderr, "all unit tests completed\n");
     return 0;
 }

@@ -41,7 +41,6 @@ HashTable *dictionary;
  * the grading process.
  */
 int main(int argc, char **argv) {
-  fprintf(stderr, "Loading unit tests\n");
   unittest();
 
   if (argc != 2) {
@@ -106,10 +105,45 @@ int stringEquals(void *s1, void *s2) {
  */
 void readDictionary(char *dictName) {
   // -- TODO --
-  fprintf(stderr, "You need to implement readDictionary\n");
+  // get length of longest sentence
+  FILE *fp = fopen(dictName, "r");
+  if (!fp) {
+    fprintf(stderr, "Error in opening file: %s\n", dictName);
+    exit(61);
+  }
+
+  int c = 0, maxSentenceLen = 0, sentenceLen = 0;
+  while ((c = fgetc(fp)) != EOF) {
+    if (c == '\n') {
+      if (sentenceLen > maxSentenceLen) { maxSentenceLen = sentenceLen; };
+      sentenceLen = 0;
+      continue;
+    }
+    sentenceLen++;
+  }
+  if (sentenceLen > maxSentenceLen) { maxSentenceLen = sentenceLen; };
+  fclose(fp);
+  // fprintf(stderr, "max sentence len of input file: %d\n", maxSentenceLen);
+
+  fp = fopen(dictName, "r");
+  char *key, *data, *tmp;
+  char buf[maxSentenceLen + 2];
+  memset(buf, 0, sizeof(buf));
+  while (fgets(buf, maxSentenceLen + 2, fp)) {
+    // string terminates at EOF only
+    tmp = strtok(buf, " \t");
+    key = malloc((strlen(tmp) + 1) * sizeof(char));
+    strcpy(key, tmp);
+    tmp = strtok(NULL, " \t\n");
+    data = malloc((strlen(tmp) + 1) * sizeof(char));
+    strcpy(data, tmp);
+    insertData(dictionary, key, data);
+    // fprintf(stderr, "Inserting data: %s, %s\n", key, data);
+  }
+  fclose(fp);
 }
 
-/*
+/*fd 
  * This should process standard input (stdin) and perform replacements as 
  * described by the replacement set then print either the original text or 
  * the replacement to standard output (stdout) as specified in the spec (e.g., 

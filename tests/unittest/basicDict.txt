@@ -1,0 +1,4 @@
+al abcde
+num 01234
+alNum abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789
+nonWs !@#&()-[{}]:;,?/~$^+=<>\*'"
