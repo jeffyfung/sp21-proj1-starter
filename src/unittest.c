@@ -234,7 +234,6 @@ void testReadDictionaryMultipleEntries() {
 }
 
 int unittest(){
-    fprintf(stderr, "running unit tests\n");
     testStringHashAlphaNumeric();
     testStringHashZeroAndSameLeadingChar();
     testStringHashLargeInput();
@@ -251,6 +250,5 @@ int unittest(){
     testReadDictionaryInconsistentSpace();
     testReadDictionaryLongKeyValue();
     testReadDictionaryMultipleEntries();
-    fprintf(stderr, "all unit tests completed\n");
     return 0;
 }

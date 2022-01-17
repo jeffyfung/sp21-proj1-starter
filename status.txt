@@ -1,4 +1,0 @@
-running unit tests
-unit testing on readDictionary
-all unit tests completed
-Specify a dictionary

@@ -30,11 +30,15 @@ clean :
 	rm -f $(BUILD_DIR)/*.o philphix tests/sanity/testOutput
 
 # Make sure you leave testpassedall as the last thing in this line. You can add your own custom tests before it.
-test: testbasic testedge testpassedall
+test: unittest testBasic testLongWords testFragmemts testIntegrated testpassedall # testEdge not applicable on windows
 
-# unittest: clean philphix
+unittest: clean philphix
+	@echo "================Running Unittest...================="
+	./philphix
+	@echo "=============All Unittests Completed================="
+	@echo
 
-testbasic: clean philphix
+testBasic: philphix
 	touch tests/sanity/testOutput
 	rm tests/sanity/testOutput
 	@echo "================Running Program...================="
@@ -47,7 +51,7 @@ testbasic: clean philphix
 	@echo "-----------------------None!-----------------------"
 	@echo
 
-testedge: philphix
+testEdge: philphix
 	@echo "Making the test files!"
 	@echo
 	@echo "A A" > null.txt
@@ -60,6 +64,42 @@ testedge: philphix
 	@diff philphix newphilphix
 	@echo "-----------------------None!-----------------------"
 	@rm -f null.txt newphilphix
+	@echo
+
+testLongWords: philphix
+	@echo "Making the test files!"
+	@echo "================Running Program...================="
+	cat tests/longWords/test | ./philphix tests/longWords/replace > tests/longWords/testOutput
+	@echo "================Program Finished!=================="
+	@echo ""
+	@echo "Difference between test output and reference output"
+	@echo "---------------------------------------------------"
+	@diff tests/longWords/testOutput tests/longWords/reference
+	@echo "-----------------------None!-----------------------"
+	@echo
+
+testFragmemts: philphix
+	@echo "Making the test files!"
+	@echo "================Running Program...================="
+	cat tests/fragments/test | ./philphix tests/fragments/replace > tests/fragments/testOutput
+	@echo "================Program Finished!=================="
+	@echo ""
+	@echo "Difference between test output and reference output"
+	@echo "---------------------------------------------------"
+	@diff tests/fragments/testOutput tests/fragments/reference
+	@echo "-----------------------None!-----------------------"
+	@echo
+
+testIntegrated: philphix
+	@echo "Making the test files!"
+	@echo "================Running Program...================="
+	cat tests/integrated/test | ./philphix tests/integrated/replace > tests/integrated/testOutput
+	@echo "================Program Finished!=================="
+	@echo ""
+	@echo "Difference between test output and reference output"
+	@echo "---------------------------------------------------"
+	@diff tests/integrated/testOutput tests/integrated/reference
+	@echo "-----------------------None!-----------------------"
 	@echo
 
 testpassedall:

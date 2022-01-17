@@ -29,6 +29,7 @@
 #include <string.h>
 
 #include "unittest.h"
+#include <assert.h>
 
 /*
  * This hash table stores the dictionary.
@@ -41,7 +42,10 @@ HashTable *dictionary;
  * the grading process.
  */
 int main(int argc, char **argv) {
-  unittest();
+  if (argc == 1) { 
+    unittest();
+    return 0; 
+  }
 
   if (argc != 2) {
     fprintf(stderr, "Specify a dictionary\n");
@@ -59,7 +63,6 @@ int main(int argc, char **argv) {
 
   fprintf(stderr, "Processing stdin\n");
   processInput();
-
   /*
    * The MAIN function in C should always return 0 as a way of telling
    * whatever program invoked this that everything went OK.
@@ -105,45 +108,52 @@ int stringEquals(void *s1, void *s2) {
  */
 void readDictionary(char *dictName) {
   // -- TODO --
-  // get length of longest sentence
   FILE *fp = fopen(dictName, "r");
   if (!fp) {
     fprintf(stderr, "Error in opening file: %s\n", dictName);
     exit(61);
   }
-
-  int c = 0, maxSentenceLen = 0, sentenceLen = 0;
-  while ((c = fgetc(fp)) != EOF) {
-    if (c == '\n') {
-      if (sentenceLen > maxSentenceLen) { maxSentenceLen = sentenceLen; };
-      sentenceLen = 0;
+  int wordLen = 16;
+  int targetLen = 0;
+  char *key = NULL;
+  char *word = calloc(wordLen, sizeof(char));
+  char c = '\0';
+  while ((c = fgetc(fp))) {
+    if (c == ' ' || c == '\t') {
+      if (*word) {
+        key = word;
+        word = calloc(wordLen, sizeof(char)); 
+      }
       continue;
     }
-    sentenceLen++;
+    if (c == '\n' || c == '\r' || c == EOF) {
+      if (*word) {
+        insertData(dictionary, key, word);
+        word = calloc(wordLen, sizeof(char));
+      }
+      if (c == EOF) { break; }
+      continue;
+    }
+    targetLen = strlen(word);
+    if (targetLen + 1 == wordLen) {
+      wordLen *= 2;
+      word = realloc(word, wordLen);
+    }
+    word[targetLen] = c;
+    word[targetLen + 1] = '\0';
   }
-  if (sentenceLen > maxSentenceLen) { maxSentenceLen = sentenceLen; };
-  fclose(fp);
-  // fprintf(stderr, "max sentence len of input file: %d\n", maxSentenceLen);
-
-  fp = fopen(dictName, "r");
-  char *key, *data, *tmp;
-  char buf[maxSentenceLen + 2];
-  memset(buf, 0, sizeof(buf));
-  while (fgets(buf, maxSentenceLen + 2, fp)) {
-    // string terminates at EOF only
-    tmp = strtok(buf, " \t");
-    key = malloc((strlen(tmp) + 1) * sizeof(char));
-    strcpy(key, tmp);
-    tmp = strtok(NULL, " \t\n");
-    data = malloc((strlen(tmp) + 1) * sizeof(char));
-    strcpy(data, tmp);
-    insertData(dictionary, key, data);
-    // fprintf(stderr, "Inserting data: %s, %s\n", key, data);
-  }
+  if (!*word) { free(word); }
   fclose(fp);
 }
 
-/*fd 
+void writeWordToStdout(char *word) {
+  while (*word) {
+    if (putchar(*word) == EOF) { fprintf(stderr, "error when writing to stdout"); }
+    word++;
+  }
+}
+
+/*
  * This should process standard input (stdin) and perform replacements as 
  * described by the replacement set then print either the original text or 
  * the replacement to standard output (stdout) as specified in the spec (e.g., 
@@ -167,5 +177,73 @@ void readDictionary(char *dictName) {
  */
 void processInput() {
   // -- TODO --
-  fprintf(stderr, "You need to implement processInput\n");
+  // cannot extract from stdin more than once
+  // 1) store the whole text
+  // 2) store the sentence (and get maxSentenceLen / maxWordLen) and parse immediately
+  // 3) wordLen *= 2; realloc(target, wordLen*2)
+  char c = '\0';
+  int wordLen = 16;
+  int targetLen = 0;
+  char *target = calloc(wordLen, sizeof(char));
+  char *targetTrailingLc = calloc(wordLen, sizeof(char));
+  char *targetLc = calloc(wordLen, sizeof(char));
+  char *replacement;
+  while ((c = fgetc(stdin))) {
+    // reallocate memory with more space when necessary
+    if ((strlen(target) + 1) == wordLen) { 
+      wordLen *= 2;
+      assert(target = realloc(target, wordLen));
+      assert(targetTrailingLc = realloc(targetTrailingLc, wordLen));
+      assert(targetLc = realloc(targetLc, wordLen));
+    }
+    // non-alnum entails the end of a possiblly replacable word; reset memory of targets
+    if (!isalnum(c)) {
+      writeWordToStdout(target);
+      if (c == EOF) { break; }
+      putchar(c);
+      memset(target, 0, wordLen * sizeof(char));
+      memset(targetTrailingLc, 0, wordLen * sizeof(char));
+      memset(targetLc, 0, wordLen * sizeof(char));
+      continue;
+    }
+    // improvement: start chopping the target from the beginning
+    char *targetPtr = target;
+    char *targetTrailingLcPtr = targetTrailingLc;
+    char *targetLcPtr = targetLc;
+    targetLen = strlen(target);
+    target[targetLen] = c;
+    target[targetLen + 1] = '\0';
+    targetLc[targetLen] = tolower(c);
+    targetLc[targetLen + 1] = '\0';
+    targetTrailingLc[targetLen] = tolower(c);
+    targetTrailingLc[targetLen + 1] = '\0';
+
+    for (int i = 0; i <= targetLen; i++) {
+      targetTrailingLcPtr[0] = targetPtr[0];
+      if ((replacement = findData(dictionary, targetPtr))) {
+        for (int n = 0; n < i; n++) { putchar(target[n]); }
+        writeWordToStdout(replacement);
+      } else if ((replacement = findData(dictionary, targetTrailingLcPtr))) {
+        for (int n = 0; n < i; n++) { putchar(target[n]); }
+        writeWordToStdout(replacement);
+      } else if ((replacement = findData(dictionary, targetLcPtr))) {
+        for (int n = 0; n < i; n++) { putchar(target[n]); }
+        writeWordToStdout(replacement);
+      }
+      if (replacement) {
+        memset(target, 0, wordLen * sizeof(char));
+        memset(targetTrailingLc, 0, wordLen * sizeof(char));
+        memset(targetLc, 0, wordLen * sizeof(char));
+        i = targetLen + 1;
+      } else {
+        targetTrailingLcPtr[0] = targetLcPtr[0];
+        targetPtr++;
+        targetTrailingLcPtr++;
+        targetLcPtr++;
+      }
+    }
+  }
+  free(target);
+  free(targetTrailingLc);
+  free(targetLc);
 }
